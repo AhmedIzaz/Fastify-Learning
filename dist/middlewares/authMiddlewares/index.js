@@ -8,31 +8,29 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const isLoggedIn = (req, reply, done) => {
     try {
         if (req.headers.authorization) {
-            const hasExpired = jsonwebtoken_1.default.verify(req.headers.authorization, "secret", {
+            const loggedIn = jsonwebtoken_1.default.verify(req.headers.authorization, process.env.JWT_SECRET_KEY || "", {
                 ignoreExpiration: false,
             });
-            if (!hasExpired)
-                reply.code(401).send({
-                    message: "Token expired",
-                });
-            done();
+            if (loggedIn) {
+                req.userId = loggedIn === null || loggedIn === void 0 ? void 0 : loggedIn.userId;
+                return done();
+            }
         }
-        reply.code(401).send({ message: "Unauthorized" });
+        throw new Error("Unauthorized");
     }
     catch (err) {
-        reply.code(401).send({ message: "Unauthorized" });
+        return reply.code(401).send({ message: "Unauthorized" });
     }
 };
 exports.isLoggedIn = isLoggedIn;
 const notLoggedIn = (req, reply, done) => {
     try {
         if (req.headers.authorization) {
-            const hasExpired = jsonwebtoken_1.default.verify(req.headers.authorization, "secret", {
+            const notExpired = jsonwebtoken_1.default.verify(req.headers.authorization, process.env.JWT_SECRET_KEY || "", {
                 ignoreExpiration: false,
             });
-            if (!hasExpired)
-                done();
-            reply.code(401).send({ message: "Already Looged In" });
+            if (notExpired)
+                reply.code(401).send({ message: "Already Looged In" });
         }
         done();
     }

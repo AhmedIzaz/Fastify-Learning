@@ -2,17 +2,15 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { prisma } from "../../src/app";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { ISignUp } from "../../types/authTypes";
 export const loginController = async (
-  req: FastifyRequest<{
-    Body: {
-      email: string;
-      password: string;
-    };
+  request: FastifyRequest<{
+    Body: ISignUp;
   }>,
   reply: FastifyReply
 ) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = request.body;
     const user = await prisma.user.findFirst({
       where: {
         email,
@@ -23,10 +21,11 @@ export const loginController = async (
     if (!passwordMatched) return reply.code(401).send("Unauthorized Access");
     const token = jwt.sign(
       {
+        userId: user?.id,
         email: user?.email,
         username: user?.username,
       },
-      "secret",
+      process.env.JWT_SECRET_KEY || "",
       {
         expiresIn: 60,
       }
@@ -42,11 +41,7 @@ export const loginController = async (
 
 export const signupController = async (
   req: FastifyRequest<{
-    Body: {
-      email: string;
-      username: string;
-      password: string;
-    };
+    Body: ISignUp;
   }>,
   reply: FastifyReply
 ) => {

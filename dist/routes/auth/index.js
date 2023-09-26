@@ -6,30 +6,8 @@ const authValidation_1 = require("../../validation/authValidation");
 exports.default = (fastify, _, done) => {
     fastify.addSchema(authValidation_1.loginReqValidator);
     fastify.post("/login", {
-        schema: {
-            body: {
-                $ref: "loginReqBody",
-            },
-            response: {
-                200: {
-                    type: "object",
-                    properties: {
-                        message: {
-                            type: "string",
-                        },
-                        token: {
-                            type: "string",
-                        },
-                    },
-                },
-                500: {
-                    type: "string",
-                },
-            },
-        },
-        preHandler: (req, rep, done) => {
-            (0, authMiddlewares_1.notLoggedIn)(req, rep, done);
-        },
+        schema: authValidation_1.loginReqRespValidator,
+        preHandler: [authMiddlewares_1.notLoggedIn],
     }, authController_1.loginController);
     fastify.post("/signup", {
         schema: {
@@ -37,9 +15,7 @@ exports.default = (fastify, _, done) => {
                 $ref: "loginReqBody",
             },
         },
-        preHandler: (req, reply, done) => {
-            (0, authMiddlewares_1.notLoggedIn)(req, reply, done);
-        },
+        preHandler: [authMiddlewares_1.notLoggedIn],
     }, authController_1.signupController);
     done();
 };

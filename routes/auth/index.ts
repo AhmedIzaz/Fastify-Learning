@@ -4,7 +4,10 @@ import {
   signupController,
 } from "../../controllers/authController";
 import { notLoggedIn } from "../../middlewares/authMiddlewares";
-import { loginReqValidator } from "../../validation/authValidation";
+import {
+  loginReqValidator,
+  loginReqRespValidator,
+} from "../../validation/authValidation";
 
 export default (
   fastify: FastifyInstance,
@@ -15,30 +18,8 @@ export default (
   fastify.post(
     "/login",
     {
-      schema: {
-        body: {
-          $ref: "loginReqBody",
-        },
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              message: {
-                type: "string",
-              },
-              token: {
-                type: "string",
-              },
-            },
-          },
-          500: {
-            type: "string",
-          },
-        },
-      },
-      preHandler: (req, rep, done) => {
-        notLoggedIn(req, rep, done);
-      },
+      schema: loginReqRespValidator,
+      preHandler: [notLoggedIn],
     },
     loginController
   );
@@ -50,9 +31,7 @@ export default (
           $ref: "loginReqBody",
         },
       },
-      preHandler: (req, reply, done) => {
-        notLoggedIn(req, reply, done);
-      },
+      preHandler: [notLoggedIn],
     },
     signupController
   );

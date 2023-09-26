@@ -1,39 +1,53 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
-export const isLoggedIn = (
-  req: FastifyRequest,
+export const isLoggedIn = <Tb, Tq, Tp>(
+  req: FastifyRequest<{
+    Body?: Tb;
+    Querystring?: Tq;
+    Params?: Tp;
+  }>,
   reply: FastifyReply,
   done: any
 ) => {
   try {
     if (req.headers.authorization) {
-      const hasExpired = jwt.verify(req.headers.authorization, "secret", {
-        ignoreExpiration: false,
-      });
-      if (!hasExpired)
-        reply.code(401).send({
-          message: "Token expired",
-        });
-      done();
+      const loggedIn = jwt.verify(
+        req.headers.authorization,
+        process.env.JWT_SECRET_KEY || "",
+        {
+          ignoreExpiration: false,
+        }
+      );
+      if (loggedIn) {
+        (req as any).userId = (loggedIn as any)?.userId;
+        return done();
+      }
     }
     throw new Error("Unauthorized");
   } catch (err) {
-    reply.code(401).send({ message: "Unauthorized" });
+    return reply.code(401).send({ message: "Unauthorized" });
   }
 };
 
-export const notLoggedIn = (
-  req: FastifyRequest,
+export const notLoggedIn = <Tb, Tq, Tp>(
+  req: FastifyRequest<{
+    Body?: Tb;
+    Querystring?: Tq;
+    Params?: Tp;
+  }>,
   reply: FastifyReply,
   done: any
 ) => {
   try {
     if (req.headers.authorization) {
-      const hasExpired = jwt.verify(req.headers.authorization, "secret", {
-        ignoreExpiration: false,
-      });
-      if (!hasExpired) done();
-      reply.code(401).send({ message: "Already Looged In" });
+      const notExpired = jwt.verify(
+        req.headers.authorization,
+        process.env.JWT_SECRET_KEY || "",
+        {
+          ignoreExpiration: false,
+        }
+      );
+      if (notExpired) reply.code(401).send({ message: "Already Looged In" });
     }
     done();
   } catch (err) {
